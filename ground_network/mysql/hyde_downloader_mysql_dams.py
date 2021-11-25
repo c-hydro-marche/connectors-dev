@@ -11,7 +11,7 @@ General command line:
 python3 hyde_downloader_mysql_dams.py -settings_file configuration.json -time "YYYY-MM-DD HH:MM"
 
 Version:
-20211110 (2.0.0) --> Release 2.0 Beta (HyDE package)
+20211125 (2.0.0) --> Release 2.0 Beta (HyDE package)
 20160902 (1.0.0) --> Release 1.0 Beta
 """
 # -------------------------------------------------------------------------------------
