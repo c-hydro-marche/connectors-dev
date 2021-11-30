@@ -311,109 +311,71 @@ class DriverData:
                 file_path_dst_csv_list = file_path_dst_csv_obj[var_name]
                 file_path_dst_json_list = file_path_dst_json_obj[var_name]
 
+                for time_step, file_path_anc_step, file_path_dst_csv_step, file_path_dst_json_step in zip(
+                        time_range, file_path_anc_list, file_path_dst_csv_list, file_path_dst_json_list):
 
-                if self.file_active_dst_csv:
-                #*************************** save dam levels to csv file
-                    for time_step, file_path_anc_step, file_path_dst_csv_step in zip(
-                            time_range, file_path_anc_list, file_path_dst_csv_list):
+                    logging.info(' ------> Time Step ' + str(time_step) + ' ... ')
 
-                        logging.info(' ------> Time Step ' + str(time_step) + ' ... ')
+                    if flag_upd_dst:
+                        if os.path.exists(file_path_dst_csv_step):
+                            os.remove(file_path_dst_csv_step)
 
-                        if flag_upd_dst:
-                            if os.path.exists(file_path_dst_csv_step):
-                                os.remove(file_path_dst_csv_step)
+                    if (os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
 
-                        if (os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
+                        var_data = read_obj(file_path_anc_step)
 
-                            var_data = read_obj(file_path_anc_step)
+                        if var_data.__len__() > 0:
 
-                            if var_data.__len__() > 0:
+                            var_df = organize_data_dams(time_step, var_data, dams_data, data_type=var_type,
+                                                        data_scale_factor=var_scale_factor,
+                                                        data_min_count=var_min_count,
+                                                        data_units=var_units, data_valid_range=var_valid_range)
 
-                                var_df = organize_data_dams(time_step, var_data, dams_data, data_type=var_type,
-                                                            data_scale_factor=var_scale_factor,
-                                                            data_min_count=var_min_count,
-                                                            data_units=var_units, data_valid_range=var_valid_range)
+                            if var_df is not None:
+                                var_df = order_data(var_df, var_fields_expected)
+                                # print(file_path_dst_csv_step)
+                                # print(file_path_dst_json_step)
+                                # MATTEO: add of the following two "if" statements in order to write csv file and/or json file with
+                                # dam water level data.
 
-                                if var_df is not None:
-                                    var_df = order_data(var_df, var_fields_expected)
-                                    print(file_path_dst_csv_step)
-
+                                # CSV:
+                                if self.file_active_dst_csv:
                                     folder_name_dst_csv_dset, file_name_dst_csv_dset = os.path.split(file_path_dst_csv_step)
                                     make_folder(folder_name_dst_csv_dset)
 
                                     logging.info(
-                                            ' ----> Saving dams water levels to csv file:' + str(file_path_dst_csv_step))
+                                        ' ----> Saving dams water levels to csv file:' + str(file_path_dst_csv_step))
                                     write_file_csv(file_path_dst_csv_step, var_df)
 
-                                    logging.info(' ------> Time Step ' + str(time_step) + ' ... DONE')
-                                else:
-                                    logging.info(' ------> Time Step ' + str(time_step) +
-                                                 ' ... SKIPPED. Dumped datasets are null due to the applications of filters')
-                            else:
-
-                                logging.info(' ------> Time Step ' + str(time_step) + ' ... FAILED. ')
-                                logging.warning(' ===> Data downloaded from database source service is null.')
-
-                        elif (not os.path.exists(file_path_anc_step)) and (os.path.exists(file_path_dst_csv_step)):
-                            logging.info(' ------> Time Step ' + str(time_step) +
-                                        ' ... SKIPPED. Destination file always exists.')
-
-                        elif (not os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
-                            logging.info(' ------> Time Step ' + str(time_step) +
-                                        ' ... SKIPPED. Variable is not activated or source datasets are empty.')
-
-
-
-                if self.file_active_dst_json:  # MATTEO: add of this if statement
-                # *************************** save dam levels to json file
-                    for time_step, file_path_anc_step, file_path_dst_json_step in zip(
-                            time_range, file_path_anc_list, file_path_dst_json_list):
-
-                        logging.info(' ------> Time Step ' + str(time_step) + ' ... ')
-
-                        if flag_upd_dst:
-                            if os.path.exists(file_path_dst_json_step):
-                                os.remove(file_path_dst_json_step)
-
-                        if (os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_json_step)):
-
-                            var_data = read_obj(file_path_anc_step)
-
-                            if var_data.__len__() > 0:
-
-                                var_df = organize_data_dams(time_step, var_data, dams_data, data_type=var_type,
-                                                            data_scale_factor=var_scale_factor,
-                                                            data_min_count=var_min_count,
-                                                            data_units=var_units, data_valid_range=var_valid_range)
-
-                                if var_df is not None:
-                                    var_df = order_data(var_df, var_fields_expected)
-                                    print(file_path_dst_json_step)
-
-                                    folder_name_dst_json_dset, file_name_dst_json_dset = os.path.split(file_path_dst_json_step)
+                                # JSON:
+                                if self.file_active_dst_json:
+                                    folder_name_dst_json_dset, file_name_dst_json_dset = os.path.split(file_path_dst_csv_step)
                                     make_folder(folder_name_dst_json_dset)
+
                                     logging.info(
                                         ' ----> Saving dams water levels to json file:' + str(file_path_dst_json_step))
-                                    all_levels2json = write_file_json(var_df)                 # MATTEO: add of function write_file_json()
-                                    json2dump_dams(all_levels2json, file_path_dst_json_step)  # MATTEO: add of function json2dump_dams()
+                                    # prepare dictionary with dam level data for each section:
+                                    all_levels2json = write_file_json(var_df)
+                                    # save dictionary to json file:
+                                    json2dump_dams(all_levels2json, file_path_dst_json_step)
 
-                                    logging.info(' ------> Time Step ' + str(time_step) + ' ... DONE')
-                                else:
-                                    logging.info(' ------> Time Step ' + str(time_step) +
-                                                 ' ... SKIPPED. Dumped datasets are null due to the applications of filters')
+                                logging.info(' ------> Time Step ' + str(time_step) + ' ... DONE')
+
                             else:
+                                logging.info(' ------> Time Step ' + str(time_step) +
+                                             ' ... SKIPPED. Dumped datasets are null due to the applications of filters')
+                        else:
 
-                                logging.info(' ------> Time Step ' + str(time_step) + ' ... FAILED. ')
-                                logging.warning(' ===> Data downloaded from database source service is null.')
+                            logging.info(' ------> Time Step ' + str(time_step) + ' ... FAILED. ')
+                            logging.warning(' ===> Data downloaded from database source service is null.')
 
-                        elif (not os.path.exists(file_path_anc_step)) and (os.path.exists(file_path_dst_csv_step)):
-                            logging.info(' ------> Time Step ' + str(time_step) +
-                                         ' ... SKIPPED. Destination file always exists.')
-                        elif (not os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
-                            logging.info(' ------> Time Step ' + str(time_step) +
-                                         ' ... SKIPPED. Variable is not activated or source datasets are empty.')
+                    elif (not os.path.exists(file_path_anc_step)) and (os.path.exists(file_path_dst_csv_step)):
+                        logging.info(' ------> Time Step ' + str(time_step) +
+                                     ' ... SKIPPED. Destination file always exists.')
 
-                logging.info(' -----> Variable ' + var_name + ' ... DONE')
+                    elif (not os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
+                        logging.info(' ------> Time Step ' + str(time_step) +
+                                     ' ... SKIPPED. Variable is not activated or source datasets are empty.')
 
             else:
 

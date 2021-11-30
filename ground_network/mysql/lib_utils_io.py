@@ -41,36 +41,34 @@ def write_file_json(data_frame):
     # Comments:                                                               #
     # ************************************************************************#
     # IN:                                                                     #
-    #    1. file_csv_name      = path of the input file csv with dam levels   #
-    #    2. file_json_name     = path of the output file json with dam levels #
+    #    1. data_frame         = df with water level for all dams at one time #
     # OUT:                                                                    #
-    #    1. json_dighe_dewetra = json file with dam levels for dewetra        #
+    #    1. json_dams_dewetra = json dictionary with dam levels for dewetra   #
     ###########################################################################
     #df_dighe = pd.read_csv(file_name, sep=',', decimal='.', parse_dates=True)
-    df_dighe = data_frame
+    df_dams = data_frame
 
-    time = df_dighe.iloc[:, 3]
+    time = df_dams.iloc[:, 3]
     for t in range(0, len(time)):
         try:
-            time_temp = datetime.datetime.strptime(str(df_dighe.iloc[t]['time']), '%Y-%m-%d %H:%M:%S')
+            time_temp = datetime.datetime.strptime(str(df_dams.iloc[t]['time']), '%Y-%m-%d %H:%M:%S')
         except:
-            time_temp = datetime.datetime.strptime(str(df_dighe.iloc[t]['time']), '%Y-%m-%d')
+            time_temp = datetime.datetime.strptime(str(df_dams.iloc[t]['time']), '%Y-%m-%d')
 
         time_temp = datetime.datetime.timestamp(time_temp)
         time_temp = "{:.0f}".format(time_temp)
         time[t] = time_temp
 
-    tot_number_of_sections = len(df_dighe['code'])
-    json_dighe_dewetra = [{} for i in range(tot_number_of_sections)]
+    tot_number_of_sections = len(df_dams['code'])
+    json_dams_dewetra = [{} for i in range(tot_number_of_sections)]
     tot_number_data = 1   # for instance we consider only one value
     for sect in range(0, tot_number_of_sections):
         # print(sect)
-        series = [{"dateTime": str(time[sect]), "value": str("{:.2f}".format(df_dighe['data'][sect]))} for i in
+        series = [{"dateTime": str(time[sect]), "value": str("{:.2f}".format(df_dams['data'][sect]))} for i in
                   range(0, tot_number_data)]
-        json_dighe_dewetra[sect] = {"sectionId": str(df_dighe['code'][sect]),
-                                    "serie": series}
+        json_dams_dewetra[sect] = {"sectionId": str(df_dams['code'][sect]), "serie": series}
 
-    return (json_dighe_dewetra)
+    return (json_dams_dewetra)
 
 
 
