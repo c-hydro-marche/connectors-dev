@@ -7,11 +7,14 @@ import pandas as pd
 
 from copy import deepcopy
 
-from bin.downloader.ground_network.mysql.lib_utils_io import write_file_csv, write_obj, read_obj
-from bin.downloader.ground_network.mysql.lib_utils_system import fill_tags2string, make_folder, get_root_path, list_folder
+from ground_network.mysql.lib_utils_io import write_file_csv, write_obj, read_obj, write_file_json, \
+    json2dump_dams  # Matteo: add of functions "write_file_json, json2dump_dams"
+from ground_network.mysql.lib_utils_system import fill_tags2string, make_folder, get_root_path, list_folder
 
-from bin.downloader.ground_network.mysql.lib_utils_db_dams import define_db_settings, get_db_credential, \
+from ground_network.mysql.lib_utils_db_dams import define_db_settings, get_db_credential, \
     parse_query_time, get_data_dams, organize_data_dams, order_data
+
+
 # -------------------------------------------------------------------------------------
 
 
@@ -35,6 +38,7 @@ class DriverData:
 
         self.tag_folder_name = 'folder_name'
         self.tag_file_name = 'file_name'
+        self.tag_file_active = 'active'
 
         self.tag_file_fields = 'fields'
 
@@ -50,11 +54,29 @@ class DriverData:
         self.file_name_anc_dset_raw = self.ancillary_dict[self.tag_file_name]
         self.file_path_anc_dset_obj = self.collect_file_list(self.folder_name_anc_dset_raw, self.file_name_anc_dset_raw)
 
-        self.folder_name_dst_dset_raw = self.dst_dict[self.tag_folder_name]
-        self.file_name_dst_dset_raw = self.dst_dict[self.tag_file_name]
-        self.file_path_dst_dset_obj = self.collect_file_list(self.folder_name_dst_dset_raw, self.file_name_dst_dset_raw)
+        # Matteo: add of these 2 following 'if'. the first for reading/writing csv file with dam water levels
+        # and one for writing them to json file for dewetra.
+        if 'csv' in list(self.dst_dict.keys()):
+            self.folder_name_dst_csv_dset_raw = self.dst_dict['csv'][self.tag_folder_name]
+            self.file_name_dst_csv_dset_raw = self.dst_dict['csv'][self.tag_file_name]
+            self.file_active_dst_csv = self.dst_dict['csv'][self.tag_file_active]
+            self.file_path_dst_csv_dset_obj = self.collect_file_list(
+                self.folder_name_dst_csv_dset_raw, self.file_name_dst_csv_dset_raw)
+            self.file_fields_dst_dset = self.dst_dict['csv'][self.tag_file_fields]
+        else:
+            logging.warning('The csv file that will contain the dam water levels for Dewetra has not been well' +
+                            'configured at the destination field of the initial configuration json file. Please check.')
 
-        self.file_fields_dst_dset = self.dst_dict[self.tag_file_fields]
+        if 'json' in list(self.dst_dict.keys()):
+            self.folder_name_dst_json_dset_raw = self.dst_dict['json'][self.tag_folder_name]
+            self.file_name_dst_json_dset_raw = self.dst_dict['json'][self.tag_file_name]
+            self.file_active_dst_json = self.dst_dict['json'][self.tag_file_active]
+            self.file_path_dst_json_dset_obj = self.collect_file_list(
+                self.folder_name_dst_json_dset_raw, self.file_name_dst_json_dset_raw)
+            # self.file_fields_dst_dset = self.dst_dict['json'][self.tag_file_fields]
+        else:
+            logging.warning('The json file that will contain the dam water levels for Dewetra has not been well' +
+                            'configured at the destination field of the initial configuration json file. Please check.')
 
         self.flag_updating_ancillary = flag_updating_ancillary
         self.flag_updating_destination = flag_updating_destination
@@ -107,7 +129,7 @@ class DriverData:
         elif (server_password is None) and server_user:
             logging.info(
                 ' ---> Search password and user ... found in configuration file (password is null). OK')
-        elif server_password  and server_user:
+        elif server_password and server_user:
             logging.info(
                 ' ---> Search password and user ... found in configuration file (user and password are defined). OK')
         else:
@@ -115,6 +137,7 @@ class DriverData:
             raise IOError('Check your file settings!')
 
         return db_info_upd
+
     # -------------------------------------------------------------------------------------
 
     # -------------------------------------------------------------------------------------
@@ -133,6 +156,7 @@ class DriverData:
             time_range = time_range[::-1]
 
         return time_range
+
     # -------------------------------------------------------------------------------------
 
     # -------------------------------------------------------------------------------------
@@ -148,7 +172,6 @@ class DriverData:
             if variable_tag is not None:
                 file_name_list = []
                 for datetime_step in self.time_range:
-
                     template_values_step = {
                         'domain_name': domain_name,
                         'ancillary_var_name': variable_step,
@@ -178,7 +201,7 @@ class DriverData:
 
         time_range = self.time_range
         file_path_anc_obj = self.file_path_anc_dset_obj
-        file_path_dst_obj = self.file_path_dst_dset_obj
+        file_path_dst_obj = self.file_path_dst_csv_dset_obj
         var_dict = self.variable_dict
 
         flag_upd_anc = self.flag_updating_ancillary
@@ -263,7 +286,8 @@ class DriverData:
         dams_data = self.dams_collection
 
         file_path_anc_obj = self.file_path_anc_dset_obj
-        file_path_dst_obj = self.file_path_dst_dset_obj
+        file_path_dst_csv_obj = self.file_path_dst_csv_dset_obj
+        file_path_dst_json_obj = self.file_path_dst_json_dset_obj
 
         var_dict = self.variable_dict
         var_fields_expected = self.file_fields_dst_dset
@@ -284,50 +308,110 @@ class DriverData:
             if var_tag is not None:
 
                 file_path_anc_list = file_path_anc_obj[var_name]
-                file_path_dst_list = file_path_dst_obj[var_name]
+                file_path_dst_csv_list = file_path_dst_csv_obj[var_name]
+                file_path_dst_json_list = file_path_dst_json_obj[var_name]
 
-                for time_step, file_path_anc_step, file_path_dst_step in zip(
-                        time_range, file_path_anc_list, file_path_dst_list):
 
-                    logging.info(' ------> Time Step ' + str(time_step) + ' ... ')
+                if self.file_active_dst_csv:
+                #*************************** save dam levels to csv file
+                    for time_step, file_path_anc_step, file_path_dst_csv_step in zip(
+                            time_range, file_path_anc_list, file_path_dst_csv_list):
 
-                    if flag_upd_dst:
-                        if os.path.exists(file_path_dst_step):
-                            os.remove(file_path_dst_step)
+                        logging.info(' ------> Time Step ' + str(time_step) + ' ... ')
 
-                    if (os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_step)):
+                        if flag_upd_dst:
+                            if os.path.exists(file_path_dst_csv_step):
+                                os.remove(file_path_dst_csv_step)
 
-                        var_data = read_obj(file_path_anc_step)
+                        if (os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
 
-                        if var_data.__len__() > 0:
+                            var_data = read_obj(file_path_anc_step)
 
-                            var_df = organize_data_dams(time_step, var_data, dams_data, data_type=var_type,
-                                                        data_scale_factor=var_scale_factor, data_min_count=var_min_count,
-                                                        data_units=var_units, data_valid_range=var_valid_range)
+                            if var_data.__len__() > 0:
 
-                            if var_df is not None:
-                                var_df = order_data(var_df, var_fields_expected)
+                                var_df = organize_data_dams(time_step, var_data, dams_data, data_type=var_type,
+                                                            data_scale_factor=var_scale_factor,
+                                                            data_min_count=var_min_count,
+                                                            data_units=var_units, data_valid_range=var_valid_range)
 
-                                folder_name_dst_dset, file_name_dst_dset = os.path.split(file_path_dst_step)
-                                make_folder(folder_name_dst_dset)
+                                if var_df is not None:
+                                    var_df = order_data(var_df, var_fields_expected)
+                                    print(file_path_dst_csv_step)
 
-                                write_file_csv(file_path_dst_step, var_df)
+                                    folder_name_dst_csv_dset, file_name_dst_csv_dset = os.path.split(file_path_dst_csv_step)
+                                    make_folder(folder_name_dst_csv_dset)
 
-                                logging.info(' ------> Time Step ' + str(time_step) + ' ... DONE')
+                                    logging.info(
+                                            ' ----> Saving dams water levels to csv file:' + str(file_path_dst_csv_step))
+                                    write_file_csv(file_path_dst_csv_step, var_df)
+
+                                    logging.info(' ------> Time Step ' + str(time_step) + ' ... DONE')
+                                else:
+                                    logging.info(' ------> Time Step ' + str(time_step) +
+                                                 ' ... SKIPPED. Dumped datasets are null due to the applications of filters')
                             else:
-                                logging.info(' ------> Time Step ' + str(time_step) +
-                                             ' ... SKIPPED. Dumped datasets are null due to the applications of filters')
-                        else:
 
-                            logging.info(' ------> Time Step ' + str(time_step) + ' ... FAILED. ')
-                            logging.warning(' ===> Data downloaded from database source service is null.')
+                                logging.info(' ------> Time Step ' + str(time_step) + ' ... FAILED. ')
+                                logging.warning(' ===> Data downloaded from database source service is null.')
 
-                    elif (not os.path.exists(file_path_anc_step)) and (os.path.exists(file_path_dst_step)):
-                        logging.info(' ------> Time Step ' + str(time_step) +
-                                     ' ... SKIPPED. Destination file always exists.')
-                    elif (not os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_step)):
-                        logging.info(' ------> Time Step ' + str(time_step) +
-                                     ' ... SKIPPED. Variable is not activated or source datasets are empty.')
+                        elif (not os.path.exists(file_path_anc_step)) and (os.path.exists(file_path_dst_csv_step)):
+                            logging.info(' ------> Time Step ' + str(time_step) +
+                                        ' ... SKIPPED. Destination file always exists.')
+
+                        elif (not os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
+                            logging.info(' ------> Time Step ' + str(time_step) +
+                                        ' ... SKIPPED. Variable is not activated or source datasets are empty.')
+
+
+
+                if self.file_active_dst_json:  # MATTEO: add of this if statement
+                # *************************** save dam levels to json file
+                    for time_step, file_path_anc_step, file_path_dst_json_step in zip(
+                            time_range, file_path_anc_list, file_path_dst_json_list):
+
+                        logging.info(' ------> Time Step ' + str(time_step) + ' ... ')
+
+                        if flag_upd_dst:
+                            if os.path.exists(file_path_dst_json_step):
+                                os.remove(file_path_dst_json_step)
+
+                        if (os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_json_step)):
+
+                            var_data = read_obj(file_path_anc_step)
+
+                            if var_data.__len__() > 0:
+
+                                var_df = organize_data_dams(time_step, var_data, dams_data, data_type=var_type,
+                                                            data_scale_factor=var_scale_factor,
+                                                            data_min_count=var_min_count,
+                                                            data_units=var_units, data_valid_range=var_valid_range)
+
+                                if var_df is not None:
+                                    var_df = order_data(var_df, var_fields_expected)
+                                    print(file_path_dst_json_step)
+
+                                    folder_name_dst_json_dset, file_name_dst_json_dset = os.path.split(file_path_dst_json_step)
+                                    make_folder(folder_name_dst_json_dset)
+                                    logging.info(
+                                        ' ----> Saving dams water levels to json file:' + str(file_path_dst_json_step))
+                                    all_levels2json = write_file_json(var_df)                 # MATTEO: add of function write_file_json()
+                                    json2dump_dams(all_levels2json, file_path_dst_json_step)  # MATTEO: add of function json2dump_dams()
+
+                                    logging.info(' ------> Time Step ' + str(time_step) + ' ... DONE')
+                                else:
+                                    logging.info(' ------> Time Step ' + str(time_step) +
+                                                 ' ... SKIPPED. Dumped datasets are null due to the applications of filters')
+                            else:
+
+                                logging.info(' ------> Time Step ' + str(time_step) + ' ... FAILED. ')
+                                logging.warning(' ===> Data downloaded from database source service is null.')
+
+                        elif (not os.path.exists(file_path_anc_step)) and (os.path.exists(file_path_dst_csv_step)):
+                            logging.info(' ------> Time Step ' + str(time_step) +
+                                         ' ... SKIPPED. Destination file always exists.')
+                        elif (not os.path.exists(file_path_anc_step)) and (not os.path.exists(file_path_dst_csv_step)):
+                            logging.info(' ------> Time Step ' + str(time_step) +
+                                         ' ... SKIPPED. Variable is not activated or source datasets are empty.')
 
                 logging.info(' -----> Variable ' + var_name + ' ... DONE')
 

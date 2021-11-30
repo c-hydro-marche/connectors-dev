@@ -3,7 +3,7 @@
     "update_static_data": true,
     "update_dynamic_data_ancillary": true,
     "update_dynamic_data_destination": true,
-    "clean_tmp_file": false
+    "clean_tmp_file": true
   },
   "info": {
     "domain": "marche"
@@ -18,8 +18,8 @@
     "destination_sub_path_time": "%Y/%m/%d/"
   },
   "time": {
-    "time_now": "202006170000",
-    "time_period": 2,
+    "time_now": null,
+    "time_period": 96,
     "time_frequency": "H",
     "time_rounding": "H"
   },
@@ -43,18 +43,10 @@
         "file_name": "{ancillary_var_name}_{domain_name}_{ancillary_datetime}.workspace"
       },
       "destination": {
-          "csv" : {
-            "folder_name": "/hydro/data/data_dynamic/source/obs/dams/{destination_sub_path_time}",
-            "file_name": "{destination_var_name}_{domain_name}_{destination_datetime}.csv",
-            "active": true,
-            "fields": ["longitude", "latitude", "data", "time", "units", "catchment", "name",
-              "tag", "type", "code", "hmc_id_x", "hmc_id_y"]
-            },
-          "json" : {
-            "folder_name": "/hydro/data/data_dynamic/source/obs/dams/{destination_sub_path_time}",
-            "file_name": "{destination_var_name}_{domain_name}_{destination_datetime}.json",
-            "active": true
-          }
+        "folder_name": "/hydro/data/data_dynamic/source/obs/dams/{destination_sub_path_time}",
+        "file_name": "{destination_var_name}_{domain_name}_{destination_datetime}.csv",
+        "fields": ["longitude", "latitude", "data", "time", "units", "catchment", "name", "tag", "type",
+          "code", "hmc_id_x", "hmc_id_y"]
       }
     }
   },

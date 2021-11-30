@@ -5,6 +5,11 @@ import tempfile
 import os
 import json
 import pickle
+
+# libraries needed for function "write_file_json()" - by Darienzo 25/11/2021.
+import pandas as pd
+import datetime
+#from numpyencoder import NumpyEncoder
 # -------------------------------------------------------------------------------------
 
 
@@ -19,6 +24,90 @@ def write_file_csv(file_name, data_frame,
                       index=data_index, index_label=False, header=data_header,
                       columns=var_name)
 # -------------------------------------------------------------------------------------
+
+
+
+
+# -------------------------------------------------------------------------------------
+# Convert the csv file containing reservoir water levels for several dams and
+# at a specific time to a json file (in a specific configuration for Dewetra platform).
+def write_file_json(data_frame):
+    # ************************************************************************#
+    # Programmers:    Matteo Darienzo                                         #
+    # Last Modified:  16/11/2021. Version v1                                  #
+    # Institute:      CIMA Foundation                                         #
+    # References:                                                             #
+    # To do list:                                                             #
+    # Comments:                                                               #
+    # ************************************************************************#
+    # IN:                                                                     #
+    #    1. file_csv_name      = path of the input file csv with dam levels   #
+    #    2. file_json_name     = path of the output file json with dam levels #
+    # OUT:                                                                    #
+    #    1. json_dighe_dewetra = json file with dam levels for dewetra        #
+    ###########################################################################
+    #df_dighe = pd.read_csv(file_name, sep=',', decimal='.', parse_dates=True)
+    df_dighe = data_frame
+
+    time = df_dighe.iloc[:, 3]
+    for t in range(0, len(time)):
+        try:
+            time_temp = datetime.datetime.strptime(str(df_dighe.iloc[t]['time']), '%Y-%m-%d %H:%M:%S')
+        except:
+            time_temp = datetime.datetime.strptime(str(df_dighe.iloc[t]['time']), '%Y-%m-%d')
+
+        time_temp = datetime.datetime.timestamp(time_temp)
+        time_temp = "{:.0f}".format(time_temp)
+        time[t] = time_temp
+
+    tot_number_of_sections = len(df_dighe['code'])
+    json_dighe_dewetra = [{} for i in range(tot_number_of_sections)]
+    tot_number_data = 1   # for instance we consider only one value
+    for sect in range(0, tot_number_of_sections):
+        # print(sect)
+        series = [{"dateTime": str(time[sect]), "value": str("{:.2f}".format(df_dighe['data'][sect]))} for i in
+                  range(0, tot_number_data)]
+        json_dighe_dewetra[sect] = {"sectionId": str(df_dighe['code'][sect]),
+                                    "serie": series}
+
+    return (json_dighe_dewetra)
+
+
+
+
+
+###########################################################################
+def json2dump_dams(df, file_json_name):
+###########################################################################
+# Purpose: create file json from dictionary                               #
+# ************************************************************************#
+# Programmers:    Matteo Darienzo, Fabio Delogu                           #
+# Last Modified:  16/11/2021. Version v1                                  #
+# Institute:      CIMA Foundation                                         #
+# References:                                                             #
+# To do list:                                                             #
+# Comments:                                                               #
+# ************************************************************************#
+# IN:                                                                     #
+#    1. df               = dictionary with dam levels for each dam        #
+#    2. file_json_name   = name of the output file .json with dam levels  #
+# OUT:                                                                    #
+#    1. create a file .json  with dam levels data                         #
+###########################################################################
+    class SetEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, set):
+                return list(obj)
+            return json.JSONEncoder.default(self, obj)
+
+    with open(file_json_name, 'w') as f:
+        json.dump(df, f, indent=4, sort_keys=False, separators=(', ', ': '), ensure_ascii=False, cls=SetEncoder)
+
+
+
+
+
+
 
 
 # -------------------------------------------------------------------------------------

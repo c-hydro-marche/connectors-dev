@@ -4,7 +4,7 @@ import logging
 import os
 import numpy as np
 
-from bin.downloader.ground_network.mysql.lib_utils_geo import read_data_shapefile_dam
+from ground_network.mysql.lib_utils_geo import read_data_shapefile_dam
 # -------------------------------------------------------------------------------------
 
 

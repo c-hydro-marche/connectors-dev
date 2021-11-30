@@ -22,12 +22,12 @@ import logging
 import os
 import time
 
-from bin.downloader.ground_network.mysql.lib_utils_io import read_file_settings
-from bin.downloader.ground_network.mysql.lib_utils_system import make_folder
-from bin.downloader.ground_network.mysql.lib_utils_time import set_time
+from ground_network.mysql.lib_utils_io import read_file_settings
+from ground_network.mysql.lib_utils_system import make_folder
+from ground_network.mysql.lib_utils_time import set_time
 
-from bin.downloader.ground_network.mysql.drv_downloader_dams_geo import DriverGeo
-from bin.downloader.ground_network.mysql.drv_downloader_dams_data import DriverData
+from ground_network.mysql.drv_downloader_dams_geo import DriverGeo
+from ground_network.mysql.drv_downloader_dams_data import DriverData
 
 from argparse import ArgumentParser
 # -------------------------------------------------------------------------------------
@@ -42,10 +42,10 @@ time_format = '%Y-%m-%d %H:%M'
 # -------------------------------------------------------------------------------------
 
 
+
 # -------------------------------------------------------------------------------------
 # Script Main
 def main():
-
     # -------------------------------------------------------------------------------------
     # Get algorithm settings
     alg_settings, alg_time = get_args()
