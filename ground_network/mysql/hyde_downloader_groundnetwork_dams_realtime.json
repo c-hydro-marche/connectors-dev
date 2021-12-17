@@ -27,7 +27,7 @@
     "static": {
       "sections": {
         "folder_name": "/hydro/data/data_static/shapefile/",
-        "file_name": "fp_dams_marche.shp"
+        "file_name": "fp_marche.shp"
       }
     },
     "dynamic": {

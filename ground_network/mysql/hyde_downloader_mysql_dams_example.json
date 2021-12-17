@@ -18,15 +18,15 @@
     "destination_sub_path_time": "%Y/%m/%d/"
   },
   "time": {
-    "time_now": "202006170000",
-    "time_period": 2,
+    "time_now": null,
+    "time_period": 96,
     "time_frequency": "H",
     "time_rounding": "H"
   },
   "data":{
     "static": {
       "sections": {
-        "folder_name": "/hydro/data/data_static/shapefile/",
+        "folder_name": "/hydro/data/data_static/shapefile_marche/",
         "file_name": "fp_dams_marche.shp"
       }
     },

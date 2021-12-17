@@ -6,7 +6,7 @@ import os
 import json
 import pickle
 
-# libraries needed for function "write_file_json()" - by Darienzo 25/11/2021.
+# libraries needed for function "write_file_json()" - by Darienzo 17/12/2021.
 import pandas as pd
 import datetime
 #from numpyencoder import NumpyEncoder
@@ -47,8 +47,8 @@ def write_file_json(data_frame):
     ###########################################################################
     #df_dighe = pd.read_csv(file_name, sep=',', decimal='.', parse_dates=True)
     df_dams = data_frame
-
-    time = df_dams.iloc[:, 3]
+    pd.set_option("display.max_rows", None, "display.max_columns", None)
+    time = [{} for i in range(len(df_dams.iloc[:, 3]))]
     for t in range(0, len(time)):
         try:
             time_temp = datetime.datetime.strptime(str(df_dams.iloc[t]['time']), '%Y-%m-%d %H:%M:%S')
@@ -61,13 +61,14 @@ def write_file_json(data_frame):
 
     tot_number_of_sections = len(df_dams['code'])
     json_dams_dewetra = [{} for i in range(tot_number_of_sections)]
-    tot_number_data = 1   # for instance we consider only one value
-    for sect in range(0, tot_number_of_sections):
-        # print(sect)
-        series = [{"dateTime": str(time[sect]), "value": str("{:.2f}".format(df_dams['data'][sect]))} for i in
-                  range(0, tot_number_data)]
-        json_dams_dewetra[sect] = {"sectionId": str(df_dams['code'][sect]), "serie": series}
+    # tot_number_data = 1   # for instance we consider only one value
 
+    for sect in range(0, tot_number_of_sections):
+        series = [{"dateTime": str(time[sect]), "value": str("{:.2f}".format(df_dams.iloc[sect, 2]))}]
+        # df_dams['data'][sect]))} for i in  range(0, tot_number_data)]
+
+        json_dams_dewetra[sect] = {"sectionId": str(df_dams.iloc[sect, 9]), "serie": series}
+        #print(json_dams_dewetra[sect] )
     return (json_dams_dewetra)
 
 
