@@ -7,10 +7,10 @@ import pandas as pd
 
 from copy import deepcopy
 
-from bin.downloader.ground_network.odbc.lib_utils_io import write_file_csv, write_obj, read_obj
-from bin.downloader.ground_network.odbc.lib_utils_system import fill_tags2string, make_folder, get_root_path, list_folder
+from ground_network.odbc.lib_utils_io import write_file_csv, write_obj, read_obj
+from ground_network.odbc.lib_utils_system import fill_tags2string, make_folder, get_root_path, list_folder
 
-from bin.downloader.ground_network.odbc.lib_utils_db_sirmip import define_db_settings, get_db_credential, \
+from ground_network.odbc.lib_utils_db_sirmip import define_db_settings, get_db_credential, \
     parse_query_time, get_data_rs, organize_data_rs, order_data
 # -------------------------------------------------------------------------------------
 

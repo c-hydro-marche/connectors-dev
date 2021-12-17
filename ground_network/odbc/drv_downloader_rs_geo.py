@@ -4,7 +4,7 @@ import logging
 import os
 import numpy as np
 
-from bin.downloader.ground_network.odbc.lib_utils_geo import read_data_shapefile_section
+from ground_network.odbc.lib_utils_geo import read_data_shapefile_section
 # -------------------------------------------------------------------------------------
 
 

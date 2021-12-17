@@ -23,12 +23,12 @@ import logging
 import os
 import time
 
-from bin.downloader.ground_network.odbc.lib_utils_io import read_file_settings
-from bin.downloader.ground_network.odbc.lib_utils_system import make_folder
-from bin.downloader.ground_network.odbc.lib_utils_time import set_time
+from ground_network.odbc.lib_utils_io import read_file_settings
+from ground_network.odbc.lib_utils_system import make_folder
+from ground_network.odbc.lib_utils_time import set_time
 
-from bin.downloader.ground_network.odbc.drv_downloader_rs_geo import DriverGeo
-from bin.downloader.ground_network.odbc.drv_downloader_rs_data import DriverData
+from ground_network.odbc.drv_downloader_rs_geo import DriverGeo
+from ground_network.odbc.drv_downloader_rs_data import DriverData
 
 from argparse import ArgumentParser
 # -------------------------------------------------------------------------------------

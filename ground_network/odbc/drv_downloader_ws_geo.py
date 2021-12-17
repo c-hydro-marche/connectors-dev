@@ -3,7 +3,7 @@
 import logging
 import os
 
-from bin.downloader.ground_network.odbc.lib_utils_geo import read_data_raster_land
+from ground_network.odbc.lib_utils_geo import read_data_raster_land
 # -------------------------------------------------------------------------------------
 
 
