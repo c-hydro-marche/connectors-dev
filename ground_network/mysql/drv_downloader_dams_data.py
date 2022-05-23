@@ -333,10 +333,8 @@ class DriverData:
 
                             if var_df is not None:
                                 var_df = order_data(var_df, var_fields_expected)
-                                # print(file_path_dst_csv_step)
-                                # print(file_path_dst_json_step)
-                                # MATTEO: add of the following two "if" statements in order to write csv file and/or json file with
-                                # dam water level data.
+                                # MATTEO: add of the following two "if" statements in order to write csv file
+                                # and/or json file with the observed dam water level data.
 
                                 # CSV:
                                 if self.file_active_dst_csv:

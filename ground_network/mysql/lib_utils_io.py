@@ -45,7 +45,6 @@ def write_file_json(data_frame):
     # OUT:                                                                    #
     #    1. json_dams_dewetra = json dictionary with dam levels for dewetra   #
     ###########################################################################
-    #df_dighe = pd.read_csv(file_name, sep=',', decimal='.', parse_dates=True)
     df_dams = data_frame
     pd.set_option("display.max_rows", None, "display.max_columns", None)
     time = [{} for i in range(len(df_dams.iloc[:, 3]))]
@@ -66,9 +65,10 @@ def write_file_json(data_frame):
     for sect in range(0, tot_number_of_sections):
         series = [{"dateTime": str(time[sect]), "value": str("{:.2f}".format(df_dams.iloc[sect, 2]))}]
         # df_dams['data'][sect]))} for i in  range(0, tot_number_data)]
+        json_dams_dewetra[sect] = {"sectionId": 'DAM_' + str(df_dams.iloc[sect, 9]), "serie": series}
 
-        json_dams_dewetra[sect] = {"sectionId": str(df_dams.iloc[sect, 9]), "serie": series}
-        #print(json_dams_dewetra[sect] )
+    json_dams_dewetra_TOT = {"sections": json_dams_dewetra}
+
     return (json_dams_dewetra)
 
 
@@ -103,6 +103,65 @@ def json2dump_dams(df, file_json_name):
         json.dump(df, f, indent=4, sort_keys=False, separators=(', ', ': '), ensure_ascii=False, cls=SetEncoder)
 
 
+
+
+
+
+
+
+# -------------------------------------------------------------------------------------
+# Method to read json file
+def read_file_json(file_name):
+    with open(file_name, 'r', encoding="utf-8") as file_handle:
+        file_data = json.load(file_handle)
+    return file_data
+# -------------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------------
+# Method to create a tmp name
+def create_filename_tmp(prefix='tmp_', suffix='.tiff', folder=None):
+
+    if folder is None:
+        folder = '/tmp'
+
+    with tempfile.NamedTemporaryFile(dir=folder, prefix=prefix, suffix=suffix, delete=False) as tmp:
+        temp_file_name = tmp.name
+    return temp_file_name
+# -------------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------------
+# Method to read settings file
+def read_file_settings(file_name):
+    env_ws = {}
+    for env_item, env_value in os.environ.items():
+        env_ws[env_item] = env_value
+
+    with open(file_name, "r") as file_handle:
+        json_block = []
+        for file_row in file_handle:
+
+            for env_key, env_value in env_ws.items():
+                env_tag = '$' + env_key
+                if env_tag in file_row:
+                    env_value = env_value.strip("'\\'")
+                    file_row = file_row.replace(env_tag, env_value)
+                    file_row = file_row.replace('//', '/')
+
+            # Add the line to our JSON block
+            json_block.append(file_row)
+
+            # Check whether we closed our JSON block
+            if file_row.startswith('}'):
+                # Do something with the JSON dictionary
+                json_dict = json.loads(''.join(json_block))
+                # Start a new block
+                json_block = []
+
+    return json_dict
+
+# -------------------------------------------------------------------------------------
 
 
 
